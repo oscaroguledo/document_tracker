@@ -1,6 +1,7 @@
 import json
 import matplotlib.pyplot as plt
 import pycountry
+import pycountry_convert as pc
 
 class DataGetter():
     def __init__(self,file_path) -> None:
@@ -17,10 +18,9 @@ class DataGetter():
     
     def __code_to_continent(self,country_code):
         try:
-            print(country_code)
-            country_info = pycountry.countries.get(name='United States')
-            print(country_info.alpha_2,pycountry.subdivisions.,"======================",pycountry.subdivisions.get(code=country_code))
-            return pycountry.subdivisions.get(code=country_code).continent
+            continent_code = pc.country_alpha2_to_continent_code(country_code)
+            continent_name = pc.convert_continent_code_to_continent_name(continent_code)
+            return continent_name
         except Exception as e:
             print(f"Error: {e}")
             return "Unknown"
