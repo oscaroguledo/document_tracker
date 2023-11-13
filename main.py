@@ -8,6 +8,7 @@ class DataGetter():
         self.file_path = file_path
         self.data = self.__load_data()
         self.countries = self.countries_data()
+        self.countries_list = self.__countries_list()
         
 
     def __load_data(self):
@@ -34,15 +35,21 @@ class DataGetter():
             else:
                 data[country]=0
         return data
+    def __countries_list(self):
+        data = []
+        for i in self.data:
+            country = i['visitor_country']
+            data.append(country)
+        return data
     
     def continent_data(self):
         data={}
-        for country_code in self.countries:
+        for country_code in self.countries_list:
             continent = self.__code_to_continent(country_code)
             if continent in data.keys():
                 data[continent]+=1
             else:
-                data[continent]=0
+                data[continent]=1
         return data
 
 
