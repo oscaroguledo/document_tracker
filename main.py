@@ -16,6 +16,12 @@ class DataGetter():
         with open(self.file_path, 'r') as file:
             data = [json.loads(line) for line in file]
         return data
+    def __countries_list(self):
+        data = []
+        for i in self.data:
+            country = i['visitor_country']
+            data.append(country)
+        return data
     
     def __code_to_continent(self,country_code):
         try:
@@ -23,24 +29,20 @@ class DataGetter():
             continent_name = pc.convert_continent_code_to_continent_name(continent_code)
             return continent_name
         except Exception as e:
-            print(f"Error: {e}")
-            return "Unknown"
+            #print(f"Error: {e}")
+            return "Unknown Region"
     
     def countries_data(self):
         data = {}
         for i in self.data:
+            print(i)
             country = i['visitor_country']
             if country in data.keys():
                 data[country]+=1
             else:
-                data[country]=0
+                data[country]=1
         return data
-    def __countries_list(self):
-        data = []
-        for i in self.data:
-            country = i['visitor_country']
-            data.append(country)
-        return data
+    
     
     def continent_data(self):
         data={}
@@ -51,6 +53,15 @@ class DataGetter():
             else:
                 data[continent]=1
         return data
+    def browser_data(self):
+        data = {}
+        for i in self.data:
+            browser = i['visitor useragent']
+            if browser in data.keys():
+                data[browser]+=1
+            else:
+                data[browser]=1
+        return data
 
 
 if __name__ == "__main__":
@@ -58,5 +69,5 @@ if __name__ == "__main__":
 
     # Load data from the file
     data_getter = DataGetter(file_path)
-    load_data = data_getter.continent_data()
+    load_data = data_getter.browser_data()
     print(load_data)
