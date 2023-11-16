@@ -1,31 +1,25 @@
-import json
 import re
 import matplotlib.pyplot as plt
-import pycountry
+import pandas as pd
 import pycountry_convert as pc
-from collections import defaultdict
+from collections import defaultdict,Counter
 
 class DataGetter():
     def __init__(self,file_path) -> None:
         self.file_path = file_path
         self.data = self.__load_data()
-        self.countries = self.countries_data()
-        self.countries_list = self.__countries_list()
+        self.countries = self.get_countries_data()
+        self.countries_list = self.__get_countries_list()
         
 
     def __load_data(self):
-        data = []
-        with open(self.file_path, 'r') as file:
-            data = [json.loads(line) for line in file]
+        data = pd.read_json(self.file_path, lines=True)
         return data
-    def __countries_list(self):
-        data = []
-        for i in self.data:
-            country = i['visitor_country']
-            data.append(country)
+    def __get_countries_list(self):
+        data = self.data['visitor_country'].tolist()
         return data
     
-    def __code_to_continent(self,country_code):
+    def __get_code_to_continent(self,country_code):
         try:
             continent_code = pc.country_alpha2_to_continent_code(country_code)
             continent_name = pc.convert_continent_code_to_continent_name(continent_code)
@@ -34,26 +28,13 @@ class DataGetter():
             #print(f"Error: {e}")
             return "Unknown Region"
     
-    def countries_data(self):
-        data = {}
-        for i in self.data:
-            country = i['visitor_country']
-            if country in data.keys():
-                data[country]+=1
-            else:
-                data[country]=1
-        return data
+    def get_countries_data(self):
+        country_counts = self.data['visitor_country'].value_counts().to_dict()
+        return country_counts
     
-    
-    def continent_data(self):
-        data={}
-        for country_code in self.countries_list:
-            continent = self.__code_to_continent(country_code)
-            if continent in data.keys():
-                data[continent]+=1
-            else:
-                data[continent]=1
-        return data
+    def get_continent_data(self):
+        data = Counter(self.__code_to_continent(country_code) for country_code in self.countries_list)
+        return dict(data)
     def __identify_browser(self,user_agent):
         if re.search(r'Chrome', user_agent):
             return 'Google Chrome'
@@ -70,69 +51,57 @@ class DataGetter():
         else:
             return 'Unknown Browser'
 
-    def browser_data(self):
-        data = {}
-        for i in self.data:
-            browser = i['visitor_useragent']
-            browser = self.__identify_browser(browser)
-            if browser in data.keys():
-                data[browser]+=1
-            else:
-                data[browser]=1
-        return data
-    def reading_time(self):
+    def get_browser_data(self):
+        data = Counter(self.__identify_browser(i['visitor_useragent']) for i in self.data)
+        return dict(data)
+    
+    def get_reading_time(self):
         # Create a dictionary to store total reading time for each user
         user_reading_time = defaultdict(int)
 
-        # Process JSON data to calculate total reading time for each user
-        
-        for entry in self.data:
+        # Process DataFrame data to calculate total reading time for each user
+        for index, entry in self.data.iterrows():
             if entry['event_type'] == 'pagereadtime':
                 user_uuid = entry['visitor_uuid']
-                read_time = entry['event_readtime'] if 'event_readtime' in entry else 0
+                read_time = entry.get('event_readtime', 0)
                 user_reading_time[user_uuid] += read_time
 
         # Get the top 10 readers based on total reading time
         top_10_readers = sorted(user_reading_time.items(), key=lambda x: x[1], reverse=True)[:10]
 
         # Display the top 10 readers and their total reading time
-        data={"title":"Top 10 readers based on total reading time:", 'data':[]}
-        
-        for rank, (user_id, total_time) in enumerate(top_10_readers, start=1):
-            data["data"].append({"rank:":rank,"User_ID:":user_id,"total_reading_time:":f"{total_time} secs"})
+        data = {
+            "title": "Top 10 readers based on total reading time:",
+            "data": [
+                {
+                    "rank": rank,
+                    "User_ID": user_id,
+                    "total_reading_time": f"{total_time} secs"
+                }
+                for rank, (user_id, total_time) in enumerate(top_10_readers, start=1)
+            ]
+        }
         return data
     
     def __get_document_readers(self,doc_id):
-        readers = set()
-        for i in self.data:
-            if 'subject_doc_id' in i.keys():
-                if i['subject_doc_id'] == doc_id:
-                    readers.add(i['visitor_uuid'])
+        readers = list(self.data.loc[self.data['subject_doc_id'] == doc_id, 'visitor_uuid'])
         return readers
     def __get_reader_documents(self,visitor_uuid):
-        documents = set()
-        for i in self.data:
-            if 'visitor_uuid' in i.keys():
-                if i['visitor_uuid'] == visitor_uuid:
-                    documents.add(i['env_doc_id'])
+        documents = list(self.data.loc[self.data['visitor_uuid'] == visitor_uuid, 'subject_doc_id'])
         return documents
-    def also_like(self,doc_id, visitor_uuid=None, sorting_function=None):
-        all_readers = self.__get_document_readers(doc_id)
-        related_docs_count = defaultdict(int)
-
-        for reader in all_readers:
-            related_documents = self.__get_reader_documents(reader)
-            for related_doc in related_documents:
-                if related_doc != doc_id:
-                    related_docs_count[related_doc] += 1
-
-        sorted_related_docs = sorted(related_docs_count.items(), key=lambda x: sorting_function(x[1]), reverse=True)
-
-        if visitor_uuid:
-            visitor_docs = self.__get_reader_documents(visitor_uuid)
-            sorted_related_docs = [doc for doc in sorted_related_docs if doc[0] not in visitor_docs]
-
-        return [doc[0] for doc in sorted_related_docs][:10]
+    
+    def order(self, array,order, limit):
+        if order =="asc":
+            return sorted(array)[:limit]
+        if order =="desc":
+            return sorted(array, reverse=True)[:limit]
+    
+    def get_also_like(self,doc_uuid, visitor_uuid=None, sorting_function=None):
+        # Filter data based on provided document UUID and optional visitor UUID
+        readers = self.__get_document_readers(doc_uuid)
+        print(readers)
+        liked_docs=sorting_function([self.__get_reader_documents(reader) for reader in readers][0])
+        return liked_docs
 
 
 if __name__ == "__main__":
@@ -140,12 +109,14 @@ if __name__ == "__main__":
 
     # Load data from the file
     data_getter = DataGetter(file_path)
+
     """
     reading_time = data_getter.reading_time()
     print(reading_time)"""
     # Example usage:
-    document_id = "140224195414-e5a9acedd5eb6631bb6b39422fba6798"
-    visitor_id = "04daa9ed9dde73d3"
+    document_id = "140101080405-6e5e88732ba9a4cb392c512322ec12b5"
+    visitor_id = "c08fc48b49f0e1be"
     # Sort based on the number of readers
-    result = data_getter.also_like(document_id, visitor_id, lambda x: x)
+    
+    result = data_getter.get_also_like(document_id, visitor_id, lambda x: data_getter.order(x, "desc", 10))
     print("Top 10 'also liked' documents based on number of readers:", result)
