@@ -11,14 +11,12 @@ class DataGetter():
         self.countries = self.get_countries_data()
         self.countries_list = self.__get_countries_list()
         
-
     def __load_data(self):
         data = pd.read_json(self.file_path, lines=True)
         return data
     def __get_countries_list(self):
         data = self.data['visitor_country'].tolist()
         return data
-    
     def __get_code_to_continent(self,country_code):
         try:
             continent_code = pc.country_alpha2_to_continent_code(country_code)
@@ -26,14 +24,12 @@ class DataGetter():
             return continent_name
         except Exception as e:
             #print(f"Error: {e}")
-            return "Unknown Region"
-    
+            return "Unknown Region"  
     def get_countries_data(self):
         country_counts = self.data['visitor_country'].value_counts().to_dict()
         return country_counts
-    
     def get_continent_data(self):
-        data = Counter(self.__code_to_continent(country_code) for country_code in self.countries_list)
+        data = Counter(self.__get_code_to_continent(country_code) for country_code in self.countries_list)
         return dict(data)
     def __identify_browser(self,user_agent):
         if re.search(r'Chrome', user_agent):
@@ -52,7 +48,8 @@ class DataGetter():
             return 'Unknown Browser'
 
     def get_browser_data(self):
-        data = Counter(self.__identify_browser(i['visitor_useragent']) for i in self.data)
+        d= self.data['visitor_useragent'].value_counts().to_dict()
+        data = Counter(self.__identify_browser(i) for i in d)
         return dict(data)
     
     def get_reading_time(self):
@@ -100,22 +97,51 @@ class DataGetter():
         # Filter data based on provided document UUID and optional visitor UUID
         readers = self.__get_document_readers(doc_uuid)
         print(readers)
-        liked_docs=sorting_function([self.__get_reader_documents(reader) for reader in readers][0])
+        liked_docs=sorting_function([self.__get_reader_documents(reader) for reader in readers if reader ==visitor_uuid][0])
         return liked_docs
+    
+    def show_histogram(self,dictionary,x_label,y_label, title):
+        # Extracting keys and values from the dictionary
+        categories = list(dictionary.keys())
+        values = list(dictionary.values())
 
+        # Creating the histogram
+        plt.figure(figsize=(12, 6))  # Setting the figure size
+        colors = ['blue', 'orange', 'green', 'red', 'purple', "gray","cyan"]
+        plt.bar(categories, values, color=colors, width=0.6)  # Creating the bar chart
+
+        # Adding labels and title
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.title(title)
+
+        # Rotating x-axis labels for better readability if needed
+        plt.xticks(rotation=45)
+
+        # Displaying the histogram
+        plt.tight_layout()
+        plt.show()
 
 if __name__ == "__main__":
     file_path = 'sample_tiny.json'
 
     # Load data from the file
     data_getter = DataGetter(file_path)
+    #countries= data_getter.get_countries_data()
+    #data_getter.show_histogram(countries,x_label='Countries', y_label='Frequency',title='Countries of viewers')
+    #----
+    #continents= data_getter.get_continent_data()
+    #data_getter.show_histogram(continents,x_label='Continents', y_label='Frequency',title='Continents of viewers')
+    #---
+    #continents= data_getter.get_browser_data()
+    #data_getter.show_histogram(continents,x_label='Browsers', y_label='Frequency',title='Browsers of viewers')
 
     """
     reading_time = data_getter.reading_time()
     print(reading_time)"""
     # Example usage:
-    document_id = "140101080405-6e5e88732ba9a4cb392c512322ec12b5"
-    visitor_id = "c08fc48b49f0e1be"
+    document_id = "100713205147-2ee05a98f1794324952eea5ca678c026"
+    visitor_id = '232eeca785873d35'#'76175bb1ea9805a1'
     # Sort based on the number of readers
     
     result = data_getter.get_also_like(document_id, visitor_id, lambda x: data_getter.order(x, "desc", 10))
