@@ -1,4 +1,6 @@
 import re
+from graphviz import Digraph
+from user_agents import parse
 import matplotlib.pyplot as plt
 import pandas as pd
 import pycountry_convert as pc
@@ -32,20 +34,8 @@ class DataGetter():
         data = Counter(self.__get_code_to_continent(country_code) for country_code in self.countries_list)
         return dict(data)
     def __identify_browser(self,user_agent):
-        if re.search(r'Chrome', user_agent):
-            return 'Google Chrome'
-        elif re.search(r'Safari', user_agent) and re.search(r'AppleWebKit', user_agent):
-            return 'Safari'
-        elif re.search(r'Firefox', user_agent):
-            return 'Mozilla Firefox'
-        elif re.search(r'Opera', user_agent):
-            return 'Opera'
-        elif re.search(r'Edge', user_agent):
-            return 'Microsoft Edge'
-        elif re.search(r'MSIE', user_agent):
-            return 'Internet Explorer'
-        else:
-            return 'Unknown Browser'
+        user_agent = parse(user_agent)
+        return user_agent.browser.family
 
     def get_browser_data(self):
         d= self.data['visitor_useragent'].value_counts().to_dict()
@@ -122,6 +112,29 @@ class DataGetter():
         plt.tight_layout()
         plt.show()
 
+    def generate_graph(self):
+
+        # Create a Digraph object
+        dot = Digraph()
+
+        # List of documents and readers in the "also like" relationship
+        documents = ['b4fe', 'd38c', '87c4', 'e16e', '2bb5', '9da6', '1b2b', '90c2', '56e3', 'a2c8']
+        readers = ['6771']
+
+        # Adding nodes for documents and readers
+        for doc in documents:
+            dot.node(doc[-4:], style='filled', color='lightblue')  # Shorten and shade document UUIDs
+
+        for reader in readers:
+            dot.node(reader[-4:], style='filled', color='lightgreen')  # Shorten and shade reader UUIDs
+
+        # Adding edges to represent relationships (has-read relationship)
+        for doc in documents:
+            dot.edge(reader[-4:], doc[-4:], arrowhead='vee')
+
+        # Save the .dot file
+        dot.render('also_like_graph', format='pdf', view=True)  # Output .pdf file
+
 if __name__ == "__main__":
     file_path = 'sample_tiny.json'
 
@@ -133,16 +146,18 @@ if __name__ == "__main__":
     #continents= data_getter.get_continent_data()
     #data_getter.show_histogram(continents,x_label='Continents', y_label='Frequency',title='Continents of viewers')
     #---
-    #continents= data_getter.get_browser_data()
-    #data_getter.show_histogram(continents,x_label='Browsers', y_label='Frequency',title='Browsers of viewers')
-
+    continents= data_getter.get_browser_data()
+    data_getter.show_histogram(continents,x_label='Browsers', y_label='Frequency',title='Browsers of viewers')
+    #---
     """
     reading_time = data_getter.reading_time()
     print(reading_time)"""
     # Example usage:
-    document_id = "100713205147-2ee05a98f1794324952eea5ca678c026"
-    visitor_id = '232eeca785873d35'#'76175bb1ea9805a1'
+    #document_id = "100713205147-2ee05a98f1794324952eea5ca678c026"
+    #visitor_id = '232eeca785873d35'#'76175bb1ea9805a1'
     # Sort based on the number of readers
     
-    result = data_getter.get_also_like(document_id, visitor_id, lambda x: data_getter.order(x, "desc", 10))
-    print("Top 10 'also liked' documents based on number of readers:", result)
+    #result = data_getter.get_also_like(document_id, visitor_id, lambda x: data_getter.order(x, "desc", 10))
+    #print("Top 10 'also liked' documents based on number of readers:", result)
+    #---
+    #data_getter.generate_graph()
