@@ -85,9 +85,14 @@ class DataGetter():
     def get_also_like(self,doc_uuid, visitor_uuid=None, sorting_function=None):
         # Filter data based on provided document UUID and optional visitor UUID
         readers = self.__get_document_readers(doc_uuid)
-        print(readers)
-        liked_docs=sorting_function([self.__get_reader_documents(reader) for reader in readers if reader ==visitor_uuid][0])
-        return liked_docs
+        print(readers,"=====")
+        also_liked = {doc_uuid:[]}
+        for reader in readers:
+            if reader ==visitor_uuid:
+                also_liked[doc_uuid].append({reader:self.__get_reader_documents(reader)} )
+        print(also_liked,"=====")
+        top_liked_docs=sorting_function([self.__get_reader_documents(reader) for reader in readers if reader ==visitor_uuid][0])
+        return (top_liked_docs)
     
     def show_histogram(self,dictionary,x_label,y_label, title):
         # Extracting keys and values from the dictionary
