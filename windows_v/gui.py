@@ -24,7 +24,6 @@ class DocumentTrackerApp(QMainWindow):
 
         self.main_layout = QVBoxLayout()
 
-        
         self.bottom_bar = QHBoxLayout()
         # table Button
         self.analyze_button = QPushButton("View Table")
@@ -53,23 +52,56 @@ class DocumentTrackerApp(QMainWindow):
     def create_menu_bar(self):
         menubar = self.menuBar()
         ##file menu-------
-        # open file dialog------
-        
-        open_file_action = QAction(QIcon("icons/icons8-open-file-16.png"),'Open', self)
-        open_file_action.setShortcut('Ctrl+N')
-        open_file_action.triggered.connect(self.choose_file)
+        # open file dialog----------------
+        self.open_file_action = QAction(QIcon("icons/icons8-open-file-16.png"),'Open', self)
+        self.open_file_action.setShortcut('Ctrl+N')
+        self.open_file_action.triggered.connect(self.choose_file)
         #exit action----------------------
-        exit_action = QAction(QIcon("icons/icons8-exit-16.png"),'Exit', self)
-        exit_action.setShortcut('Ctrl+Q')
-        exit_action.triggered.connect(self.close)
+        self.exit_action = QAction(QIcon("icons/icons8-exit-16.png"),'Exit', self)
+        self.exit_action.setShortcut('Ctrl+Q')
+        self.exit_action.triggered.connect(self.close)
 
-        file_menu = menubar.addMenu('File')
-        file_menu.addAction(open_file_action)
-        file_menu.addAction(exit_action)
+        self.file_menu = menubar.addMenu('File')
+        self.file_menu.addAction(self.open_file_action)
+        self.file_menu.addAction(self.exit_action)
+
+        self.options_menu = menubar.addMenu('Options')
+
+        self.viewtable = QAction(QIcon("icons/icons8-exit-16.png"),'Table', self)
+        self.viewtable.setShortcut('Ctrl+T')
+        self.viewtable.triggered.connect(self.close)
+
+        self.viewcountry = QAction(QIcon("icons/icons8-exit-16.png"),'Country', self)
+        self.viewcountry.setShortcut('Ctrl+Alt+C')
+        self.viewcountry.triggered.connect(self.close)
+
+        self.viewcontinent = QAction(QIcon("icons/icons8-exit-16.png"),'Continent', self)
+        self.viewcontinent.setShortcut('Ctrl+Alt+K')
+        self.viewcontinent.triggered.connect(self.close)
+
+        self.viewbrowser = QAction(QIcon("icons/icons8-exit-16.png"),'Browser', self)
+        self.viewbrowser.setShortcut('Ctrl+Alt+B')
+        self.viewbrowser.triggered.connect(self.close)
+
+        self.viewreaders = QAction(QIcon("icons/icons8-exit-16.png"),'Readers', self)
+        self.viewreaders.setShortcut('Ctrl+Alt+R')
+        self.viewreaders.triggered.connect(self.close)
+
+        self.viewalso_like = QAction(QIcon("icons/icons8-exit-16.png"),'Also Like', self)
+        self.viewalso_like.setShortcut('Ctrl+Alt+L')
+        self.viewalso_like.triggered.connect(self.close)
+
+        self.viewalso_like_graph = QAction(QIcon("icons/icons8-exit-16.png"),'Also Like Graph', self)
+        self.viewalso_like_graph.setShortcut('Ctrl+Alt+G')
+        self.viewalso_like_graph.triggered.connect(self.close)
+
+        
+
         ##format menu------
-        format_menu = menubar.addMenu('Format')
+        """format_menu = menubar.addMenu('Help')
         format_menu.addAction(open_file_action)
-        format_menu.addAction(exit_action)
+        format_menu.addAction(exit_action)"""
+
 
     def choose_file(self):
         file_dialog = QFileDialog(self)
@@ -90,8 +122,30 @@ class DocumentTrackerApp(QMainWindow):
         datagetter = DataGetter(file_path)
         self.datagetter= datagetter
         self.file_name =file_name
-        self.show_table(self.datagetter,self.file_name)
+        for i in [self.viewtable,self.viewcontinent,self.viewcountry,self.viewbrowser,self.viewreaders,self.viewalso_like,self.viewalso_like_graph]:
+            self.options_menu.addAction(i)
+        self.run_functionality("Table",self.datagetter,self.file_name)
 
+    def run_functionality(self, func_type=None, datagetter=None, file_name=None, data_type=None):
+        if func_type == "Table":
+            self.show_table(datagetter,self.file_name)
+        if func_type == "Browsers":
+            self.show_histogram(func_type)
+        if func_type == "Countries":
+            self.show_histogram(func_type)
+        if func_type == "Continents":
+            self.show_histogram(func_type)
+        if func_type == "Readers":
+            self.show_info("Readers",datagetter, file_name)
+        if func_type == "Also_Like":
+            self.show_info(func_type,datagetter, file_name)
+        if func_type == "Also_Like_Graph":
+            self.show_info(func_type,datagetter, file_name)
+        pass
+
+    def show_info(self,doc_type,datagetter, document):
+        pass
+        
     def show_table(self, datagetter,file_name):
         if not datagetter== None:
             # Converting the dictionary to a DataFrame
@@ -169,7 +223,7 @@ class DocumentTrackerApp(QMainWindow):
         pos.x1=1"""
         pos.x1=0.975
         pos.x0=0.075
-        print(pos.x1,pos.x0)
+        """print(pos.x1,pos.x0)"""
         ax.set_position(pos)  # Set the new position and size
         self.canvas.draw()
 
