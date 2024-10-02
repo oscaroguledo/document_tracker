@@ -154,8 +154,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for more 
 
 ### Contributors
 
-- Your Name (@oscaroguledo)
-- Other contributors
+- [Oscar Oguledo](https://github.com/oscaroguledo)
 
 ---
 
