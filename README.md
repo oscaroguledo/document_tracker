@@ -23,7 +23,7 @@ This **Document Tracker** is a Python application that analyzes and processes us
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-username/document-tracker.git
+   git clone https://github.com/oscaroguledo/document-tracker.git
    cd document-tracker
    ```
 
